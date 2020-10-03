@@ -560,7 +560,7 @@ module Xsuportal
       req = decode_request_pb
 
       # db.query('TRUNCATE `teams`')
-      db.query('DROP TABLE `teams`')
+      db.query('DROP TABLE IF EXISTS `teams`')
       db.query('CREATE TABLE `teams` (
         `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         `name` VARCHAR(255) NOT NULL,
