@@ -2,6 +2,7 @@ require 'sinatra/base'
 require 'google/protobuf'
 require 'digest/sha2'
 require 'securerandom'
+require 'json'
 
 $LOAD_PATH << File.join(File.expand_path('../', __FILE__), 'lib')
 require 'routes'
@@ -331,7 +332,7 @@ module Xsuportal
           else
             cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
             if cache
-              Marshal.load(cache[:content])
+              JSON.load(cache[:content])
             else
               ret = db.xquery(
                 <<~SQL,
@@ -408,9 +409,8 @@ module Xsuportal
                 contest_finished, contest_freezes_at,
                 contest_finished, contest_freezes_at,
               ).to_a
-              content = Marshal.dump(ret)
               db.query(<<~SQL)
-                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
+                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES ('#{ret.to_json}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
               SQL
               ret
             end
