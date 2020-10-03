@@ -443,7 +443,19 @@ module Xsuportal
     post '/initialize' do
       req = decode_request_pb
 
-      db.query('TRUNCATE `teams`')
+      # db.query('TRUNCATE `teams`')
+      db.query('DROP TABLE `teams`')
+      db.query('CREATE TABLE `teams` (
+        `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `name` VARCHAR(255) NOT NULL,
+        `leader_id` VARCHAR(255),
+        `email_address` VARCHAR(255) NOT NULL,
+        `invite_token` VARCHAR(255) NOT NULL,
+        `withdrawn` TINYINT(1) DEFAULT FALSE,
+        `created_at` DATETIME(6) NOT NULL,
+        `is_students` TINYINT(1) DEFAULT FALSE,
+        UNIQUE KEY (`leader_id`)
+      ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4;')
       db.query('TRUNCATE `contestants`')
       db.query('TRUNCATE `benchmark_jobs`')
       db.query('TRUNCATE `clarifications`')
@@ -722,8 +734,9 @@ module Xsuportal
         )
 
         db.xquery(
-          'UPDATE `teams` SET `leader_id` = ? WHERE `id` = ? LIMIT 1',
+          'UPDATE `teams` SET `leader_id` = ?, `is_students` = ? WHERE `id` = ? LIMIT 1',
           current_contestant[:id],
+          req.is_student,
           team_id,
         )
 
@@ -768,6 +781,12 @@ module Xsuportal
           req.is_student,
           current_contestant[:id],
         )
+        if team[:is_students] && !req.is_student
+          db.xquery(
+            'UPDATE `teams` SET `is_students` = FALSE WHERE `id` = ?',
+            req.team_id
+          )
+        end
       end
 
       encode_response_pb
