@@ -479,7 +479,9 @@ module Xsuportal
           contest: contest_pb,
         )
         content = Marshal.dump(res)
-        db.query("UPDATE `cache` SET `content` = x'#{content.hex}', created_at = '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}' WHERE `id` = 1")
+        db.query(<<~SQL)
+          REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
+        SQL
         res
       end
 
