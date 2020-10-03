@@ -244,10 +244,22 @@ module Xsuportal
         )
       end
 
+      $cache = []
+
       def leaderboard_pb(team_id:0)
         contest = current_contest_status[:contest]
         contest_finished = contest[:status] == :FINISHED
         contest_freezes_at = contest[:contest_freezes_at]
+
+        if team_id == 0 && !contest_finished
+          t, params = *$cache
+          if t && (Time.now - t) < 0.5
+            return Proto::Resources::Leaderboard.new(
+              **params,
+              contest: contest_pb(contest),
+            )
+          end
+        end
 
         leaderboard = nil
         job_results = nil
