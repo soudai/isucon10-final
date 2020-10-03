@@ -331,7 +331,7 @@ module Xsuportal
             )
           else
             cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
-            if cache && false
+            if cache && !contest_finished
               JSON.load(cache[:content])
             else
               ret = db.xquery(
@@ -409,9 +409,11 @@ module Xsuportal
                 contest_finished, contest_freezes_at,
                 contest_finished, contest_freezes_at,
               ).to_a
-              db.query(<<~SQL)
-                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES ('#{ret.to_json}', '#{(Time.now + 0.1).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
-              SQL
+              if !contest_finished
+                db.query(<<~SQL)
+                  REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES ('#{ret.to_json}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
+                SQL
+              end
               ret
             end
           end
