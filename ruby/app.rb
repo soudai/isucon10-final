@@ -149,8 +149,8 @@ module Xsuportal
         }
       end
 
-      def contest_pb
-        Proto::Resources::Contest.new(current_contest_status[:contest])
+      def contest_pb(contest = current_contest_status[:contest])
+        Proto::Resources::Contest.new(contest)
       end
 
       def contest_status_restricted(statuses, msg)
@@ -479,7 +479,7 @@ module Xsuportal
           teams: teams,
           general_teams: general_teams,
           student_teams: student_teams,
-          contest: contest_pb,
+          contest: contest_pb(contest),
         )
       end
 
