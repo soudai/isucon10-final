@@ -478,10 +478,12 @@ module Xsuportal
           student_teams: student_teams,
           contest: contest_pb,
         )
-        content = Marshal.dump(res)
-        db.query(<<~SQL)
-          REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
-        SQL
+        if team_id == 0
+          content = Marshal.dump(res)
+          db.query(<<~SQL)
+            REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
+          SQL
+        end
         res
       end
 
