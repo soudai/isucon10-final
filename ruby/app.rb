@@ -331,7 +331,7 @@ module Xsuportal
             )
           else
             cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
-            if cache
+            if cache && false
               JSON.load(cache[:content])
             else
               ret = db.xquery(
