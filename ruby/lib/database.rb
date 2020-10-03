@@ -1,34 +1,33 @@
 require 'mysql2'
 require 'mysql2-cs-bind'
 
-require 'newrelic_rpm'
-require 'new_relic/agent/method_tracer'
-require 'new_relic/agent/tracer'
+# require 'newrelic_rpm'
+# require 'new_relic/agent/method_tracer'
+# require 'new_relic/agent/tracer'
 
-class Mysql2ClientWithNewRelic < Mysql2::Client
-  def initialize(*args)
-    super
-  end
+# class Mysql2ClientWithNewRelic < Mysql2::Client
+#   def initialize(*args)
+#     super
+#   end
 
-  def query(sql, *args)
-    callback = -> (result, metrics, elapsed) do
-      NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
-    end
-    op = sql[/^(select|insert|update|delete|begin|commit|rollback|truncate)/i] || 'other'
-    table = sql[/\bbenchmark_jobs|clarifications|contest_config|contestants|notifications|push_subscriptions|teams\b/] || 'other'
-    NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
-      super
-    end
-  end
-end
+#   def query(sql, *args)
+#     callback = -> (result, metrics, elapsed) do
+#       NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
+#     end
+#     op = sql[/^(select|insert|update|delete|begin|commit|rollback|truncate)/i] || 'other'
+#     table = sql[/\bbenchmark_jobs|clarifications|contest_config|contestants|notifications|push_subscriptions|teams\b/] || 'other'
+#     NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
+#       super
+#     end
+#   end
+# end
 
 module Xsuportal
   class Database
     class << self
       def connection
         Thread.current[:db] ||= begin
-          #conn = Mysql2::Client.new(
-          params = {
+          conn = Mysql2::Client.new(
             host: ENV['MYSQL_HOSTNAME'] || '127.0.0.1',
             port: ENV['MYSQL_PORT'] || '3306',
             username: ENV['MYSQL_USER'] || 'isucon',
@@ -40,10 +39,8 @@ module Xsuportal
             symbolize_keys: true,
             reconnect: true,
             init_command: "SET time_zone='+00:00';",
-          }
-          #)
-          ENV['NEW_RELIC_AGENT_ENABLED'] ? Mysql2ClientWithNewRelic.new(params) : Mysql2::Client.new(params)
-          #conn
+          )
+          conn
         end
       end
 
