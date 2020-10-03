@@ -244,13 +244,6 @@ module Xsuportal
       end
 
       def leaderboard_pb(team_id:0)
-        if team_id == 0
-          cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
-          if cache
-            return Marshal.load(cache[:content])
-          end
-        end
-
         contest = current_contest_status[:contest]
         contest_finished = contest[:status] == :FINISHED
         contest_freezes_at = contest[:contest_freezes_at]
@@ -335,83 +328,93 @@ module Xsuportal
               team_id, team_id, contest_finished, contest_freezes_at,
               team_id, team_id, contest_finished, contest_freezes_at,
             )
+          else
+            cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
+            if cache
+              Marshal.load(cache[:content])
             else
-            db.xquery(
-              <<~SQL,
-                SELECT
-                  `teams`.`id` AS `id`,
-                  `teams`.`name` AS `name`,
-                  `teams`.`leader_id` AS `leader_id`,
-                  `teams`.`withdrawn` AS `withdrawn`,
-                  `team_student_flags`.`student` AS `student`,
-                  (`best_score_jobs`.`score_raw` - `best_score_jobs`.`score_deduction`) AS `best_score`,
-                  `best_score_jobs`.`started_at` AS `best_score_started_at`,
-                  `best_score_jobs`.`finished_at` AS `best_score_marked_at`,
-                  (`latest_score_jobs`.`score_raw` - `latest_score_jobs`.`score_deduction`) AS `latest_score`,
-                  `latest_score_jobs`.`started_at` AS `latest_score_started_at`,
-                  `latest_score_jobs`.`finished_at` AS `latest_score_marked_at`,
-                  `latest_score_job_ids`.`finish_count` AS `finish_count`
-                FROM
-                  `teams`
-                  -- latest scores
-                  LEFT JOIN (
-                    SELECT
-                      MAX(`id`) AS `id`,
-                      `team_id`,
-                      COUNT(*) AS `finish_count`
-                    FROM
-                      `benchmark_jobs`
-                    WHERE
-                      `finished_at` IS NOT NULL
-                      -- score freeze
-                      AND ? = TRUE OR `finished_at` < ?
-                    GROUP BY
-                      `team_id`
-                  ) `latest_score_job_ids` ON `latest_score_job_ids`.`team_id` = `teams`.`id`
-                  LEFT JOIN `benchmark_jobs` `latest_score_jobs` ON `latest_score_job_ids`.`id` = `latest_score_jobs`.`id`
-                  -- best scores
-                  LEFT JOIN (
-                    SELECT
-                      MAX(`j`.`id`) AS `id`,
-                      `j`.`team_id` AS `team_id`
-                    FROM
-                      (
-                        SELECT
-                          `team_id`,
-                          MAX(`score_raw` - `score_deduction`) AS `score`
-                        FROM
-                          `benchmark_jobs`
-                        WHERE
-                          `finished_at` IS NOT NULL
-                          -- score freeze
-                          AND ? = TRUE OR `finished_at` < ?
-                        GROUP BY
-                          `team_id`
-                      ) `best_scores`
-                      LEFT JOIN `benchmark_jobs` `j` ON (`j`.`score_raw` - `j`.`score_deduction`) = `best_scores`.`score`
-                        AND `j`.`team_id` = `best_scores`.`team_id`
-                    GROUP BY
-                      `j`.`team_id`
-                  ) `best_score_job_ids` ON `best_score_job_ids`.`team_id` = `teams`.`id`
-                  LEFT JOIN `benchmark_jobs` `best_score_jobs` ON `best_score_jobs`.`id` = `best_score_job_ids`.`id`
-                  -- check student teams
-                  LEFT JOIN (
-                    SELECT
-                      `team_id`,
-                      (SUM(`student`) = COUNT(*)) AS `student`
-                    FROM
-                      `contestants`
-                    GROUP BY
-                      `contestants`.`team_id`
-                  ) `team_student_flags` ON `team_student_flags`.`team_id` = `teams`.`id`
-                ORDER BY
-                  `latest_score` DESC,
-                  `latest_score_marked_at` ASC
+              ret = db.xquery(
+                <<~SQL,
+                  SELECT
+                    `teams`.`id` AS `id`,
+                    `teams`.`name` AS `name`,
+                    `teams`.`leader_id` AS `leader_id`,
+                    `teams`.`withdrawn` AS `withdrawn`,
+                    `team_student_flags`.`student` AS `student`,
+                    (`best_score_jobs`.`score_raw` - `best_score_jobs`.`score_deduction`) AS `best_score`,
+                    `best_score_jobs`.`started_at` AS `best_score_started_at`,
+                    `best_score_jobs`.`finished_at` AS `best_score_marked_at`,
+                    (`latest_score_jobs`.`score_raw` - `latest_score_jobs`.`score_deduction`) AS `latest_score`,
+                    `latest_score_jobs`.`started_at` AS `latest_score_started_at`,
+                    `latest_score_jobs`.`finished_at` AS `latest_score_marked_at`,
+                    `latest_score_job_ids`.`finish_count` AS `finish_count`
+                  FROM
+                    `teams`
+                    -- latest scores
+                    LEFT JOIN (
+                      SELECT
+                        MAX(`id`) AS `id`,
+                        `team_id`,
+                        COUNT(*) AS `finish_count`
+                      FROM
+                        `benchmark_jobs`
+                      WHERE
+                        `finished_at` IS NOT NULL
+                        -- score freeze
+                        AND ? = TRUE OR `finished_at` < ?
+                      GROUP BY
+                        `team_id`
+                    ) `latest_score_job_ids` ON `latest_score_job_ids`.`team_id` = `teams`.`id`
+                    LEFT JOIN `benchmark_jobs` `latest_score_jobs` ON `latest_score_job_ids`.`id` = `latest_score_jobs`.`id`
+                    -- best scores
+                    LEFT JOIN (
+                      SELECT
+                        MAX(`j`.`id`) AS `id`,
+                        `j`.`team_id` AS `team_id`
+                      FROM
+                        (
+                          SELECT
+                            `team_id`,
+                            MAX(`score_raw` - `score_deduction`) AS `score`
+                          FROM
+                            `benchmark_jobs`
+                          WHERE
+                            `finished_at` IS NOT NULL
+                            -- score freeze
+                            AND ? = TRUE OR `finished_at` < ?
+                          GROUP BY
+                            `team_id`
+                        ) `best_scores`
+                        LEFT JOIN `benchmark_jobs` `j` ON (`j`.`score_raw` - `j`.`score_deduction`) = `best_scores`.`score`
+                          AND `j`.`team_id` = `best_scores`.`team_id`
+                      GROUP BY
+                        `j`.`team_id`
+                    ) `best_score_job_ids` ON `best_score_job_ids`.`team_id` = `teams`.`id`
+                    LEFT JOIN `benchmark_jobs` `best_score_jobs` ON `best_score_jobs`.`id` = `best_score_job_ids`.`id`
+                    -- check student teams
+                    LEFT JOIN (
+                      SELECT
+                        `team_id`,
+                        (SUM(`student`) = COUNT(*)) AS `student`
+                      FROM
+                        `contestants`
+                      GROUP BY
+                        `contestants`.`team_id`
+                    ) `team_student_flags` ON `team_student_flags`.`team_id` = `teams`.`id`
+                  ORDER BY
+                    `latest_score` DESC,
+                    `latest_score_marked_at` ASC
+                SQL
+                contest_finished, contest_freezes_at,
+                contest_finished, contest_freezes_at,
+              )
+              content = Marshal.dump(ret)
+              db.query(<<~SQL)
+                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
               SQL
-              contest_finished, contest_freezes_at,
-              contest_finished, contest_freezes_at,
-            )
+              ret
             end
+          end
 
           job_results = db.xquery(
             <<~SQL,
@@ -472,19 +475,12 @@ module Xsuportal
           teams << item
         end
 
-        res = Proto::Resources::Leaderboard.new(
+        Proto::Resources::Leaderboard.new(
           teams: teams,
           general_teams: general_teams,
           student_teams: student_teams,
           contest: contest_pb,
         )
-        if team_id == 0
-          content = Marshal.dump(res)
-          db.query(<<~SQL)
-            REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
-          SQL
-        end
-        res
       end
 
       def clarification_pb(clar, team)
