@@ -357,7 +357,7 @@ module Xsuportal
                     WHERE
                       `finished_at` IS NOT NULL
                       -- score freeze
-                      ? = TRUE OR `finished_at` < ?
+                      AND ? = TRUE OR `finished_at` < ?
                     GROUP BY
                       `team_id`
                   ) `latest_score_job_ids` ON `latest_score_job_ids`.`team_id` = `teams`.`id`
