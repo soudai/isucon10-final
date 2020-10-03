@@ -487,6 +487,15 @@ module Xsuportal
           teams << item
         end
 
+        if team_id == 0 && !contest_finished
+          params = {
+            teams: teams,
+            general_teams: general_teams,
+            student_teams: student_teams,
+          }
+          $cache = [Time.now, params]
+        end
+
         Proto::Resources::Leaderboard.new(
           teams: teams,
           general_teams: general_teams,
