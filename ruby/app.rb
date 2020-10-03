@@ -410,7 +410,7 @@ module Xsuportal
                 contest_finished, contest_freezes_at,
               ).to_a
               db.query(<<~SQL)
-                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES ('#{ret.to_json}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
+                REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES ('#{ret.to_json}', '#{(Time.now + 0.1).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
               SQL
               ret
             end
