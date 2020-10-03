@@ -1,6 +1,10 @@
 require 'mysql2'
 require 'mysql2-cs-bind'
 
+require 'newrelic_rpm'
+require 'new_relic/agent/method_tracer'
+require 'new_relic/agent/tracer'
+
 class Mysql2ClientWithNewRelic < Mysql2::Client
   def initialize(*args)
     super
