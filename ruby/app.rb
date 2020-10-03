@@ -253,7 +253,7 @@ module Xsuportal
 
         if team_id == 0 && !contest_finished
           t, params = *$cache
-          if t && (Time.now - t) < 0.175
+          if t && (Time.now - t) < 0.2
             return Proto::Resources::Leaderboard.new(
               **params,
               contest: contest_pb(contest),
