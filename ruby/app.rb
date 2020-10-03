@@ -560,7 +560,7 @@ module Xsuportal
       db.query('DROP TABLE IF EXISTS `cache`')
       db.query('CREATE TABLE `cache` (
         `id` INT PRIMARY KEY,
-        `content` LONGBLOB,
+        `content` LONGTEXT,
         `created_at` DATETIME(6) NOT NULL
       )')
 
