@@ -96,21 +96,25 @@ module Xsuportal
         contest = db.query(
           <<~SQL
           SELECT
-            *,
-            NOW(6) AS `current_time`,
-            CASE
-              WHEN NOW(6) < `registration_open_at` THEN 'standby'
-              WHEN `registration_open_at` <= NOW(6) AND NOW(6) < `contest_starts_at` THEN 'registration'
-              WHEN `contest_starts_at` <= NOW(6) AND NOW(6) < `contest_ends_at` THEN 'started'
-              WHEN `contest_ends_at` <= NOW(6) THEN 'finished'
-              ELSE 'unknown'
-            END AS `status`,
-            IF(`contest_starts_at` <= NOW(6) AND NOW(6) < `contest_freezes_at`, 1, 0) AS `frozen`
+            *
           FROM `contest_config`
           SQL
         ).first
 
-        contest_status_str = contest[:status]
+        # contest_status_str = contest[:status]
+        current_time = Time.now
+        contest_status_str = case
+        when current_time < contest[:registration_open_at]
+          'standby'
+        when contest[:registration_open_at] <= current_time && current_time < contest[:contest_starts_at]
+          'registration'
+        when contest[:contest_starts_at] <= current_time && current_time < contest[:contest_ends_at]
+          'started'
+        when contest[:contest_ends_at] <= current_time
+          'finished'
+        else
+          'unknown'
+        end
         if ENV['APP_ENV'] != :production && File.exist?(DEBUG_CONTEST_STATUS_FILE_PATH)
           contest_status_str = File.read(DEBUG_CONTEST_STATUS_FILE_PATH).chomp
         end
@@ -128,16 +132,19 @@ module Xsuportal
           raise "Unexpected contest status: #{contest_status_str.inspect}"
         end
 
+        fronzen = contest[:contest_starts_at] <= current_time && current_time < contest[:contest_freezes_at]
         {
           contest: {
             registration_open_at: contest[:registration_open_at],
             contest_starts_at: contest[:contest_starts_at],
             contest_freezes_at: contest[:contest_freezes_at],
             contest_ends_at: contest[:contest_ends_at],
-            frozen: contest[:frozen] == 1,
+            # frozen: contest[:frozen] == 1,
+            frozen: fronzen,
             status: status,
           },
-          current_time: contest[:current_time],
+          # current_time: contest[:current_time],
+          current_time: current_time,
         }
       end
 
