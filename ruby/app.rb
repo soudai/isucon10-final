@@ -544,9 +544,23 @@ module Xsuportal
       db.query('TRUNCATE `contestants`')
       db.query('TRUNCATE `benchmark_jobs`')
       db.query('TRUNCATE `clarifications`')
-      db.query('TRUNCATE `notifications`')
+      #db.query('TRUNCATE `notifications`')
       db.query('TRUNCATE `push_subscriptions`')
       db.query('TRUNCATE `contest_config`')
+
+      db.query('DROP TABLE IF EXISTS `notifications`')
+      db.query(<<-SQL)
+CREATE TABLE `notifications` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `contestant_id` VARCHAR(255) NOT NULL,
+  `read` TINYINT(1) NOT NULL DEFAULT FALSE,
+  `encoded_message` VARCHAR(255) NOT NULL,
+  `created_at` DATETIME(6) NOT NULL,
+  `updated_at` DATETIME(6) NOT NULL,
+  KEY `idx1` (`contestant_id`,`id`),
+  KEY `idx2` (`contestant_id`,`read`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4
+SQL
 
       db.xquery(
         'INSERT `contestants` (`id`, `password`, `staff`, `created_at`) VALUES (?, ?, TRUE, NOW(6))',
