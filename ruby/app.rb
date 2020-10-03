@@ -407,7 +407,7 @@ module Xsuportal
                 SQL
                 contest_finished, contest_freezes_at,
                 contest_finished, contest_freezes_at,
-              )
+              ).to_a
               content = Marshal.dump(ret)
               db.query(<<~SQL)
                 REPLACE INTO `cache` (`content`, `created_at`, `id`) VALUES (x'#{content.hex}', '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}', 1)
