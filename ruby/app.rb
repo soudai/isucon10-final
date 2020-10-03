@@ -252,7 +252,7 @@ module Xsuportal
                 `teams`.`name` AS `name`,
                 `teams`.`leader_id` AS `leader_id`,
                 `teams`.`withdrawn` AS `withdrawn`,
-                `team_student_flags`.`student` AS `student`,
+                `teams`.`is_students` AS `student`,
                 (`best_score_jobs`.`score_raw` - `best_score_jobs`.`score_deduction`) AS `best_score`,
                 `best_score_jobs`.`started_at` AS `best_score_started_at`,
                 `best_score_jobs`.`finished_at` AS `best_score_marked_at`,
@@ -303,16 +303,6 @@ module Xsuportal
                     `j`.`team_id`
                 ) `best_score_job_ids` ON `best_score_job_ids`.`team_id` = `teams`.`id`
                 LEFT JOIN `benchmark_jobs` `best_score_jobs` ON `best_score_jobs`.`id` = `best_score_job_ids`.`id`
-                -- check student teams
-                LEFT JOIN (
-                  SELECT
-                    `team_id`,
-                    (SUM(`student`) = COUNT(*)) AS `student`
-                  FROM
-                    `contestants`
-                  GROUP BY
-                    `contestants`.`team_id`
-                ) `team_student_flags` ON `team_student_flags`.`team_id` = `teams`.`id`
               ORDER BY
                 `latest_score` DESC,
                 `latest_score_marked_at` ASC
