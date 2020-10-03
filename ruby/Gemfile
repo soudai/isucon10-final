@@ -18,4 +18,4 @@ group :development do
   gem 'grpc-tools'
 end
 
-gem 'newrelic_rpm', '6.11.0.365', require: false
+gem 'newrelic_rpm', '6.11.0.365'
