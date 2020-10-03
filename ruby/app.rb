@@ -813,6 +813,8 @@ module Xsuportal
           req.is_student,
           current_contestant[:id],
         )
+        row = db.query('SELECT SUM(`student`) = COUNT(*) AS `student` WHERE `team_id` = ?', current_team[:id])
+        db.xquery('UPDATE `teams` SET `is_students` = ? WHERE `team_id` = ?', row[:student], current_team[:id])
       end
 
       encode_response_pb
@@ -838,7 +840,7 @@ module Xsuportal
             current_contestant[:id],
           )
         end
-        row = db.query('SELECT SUM(`student`) = COUNT(*)) AS `student` WHERE `team_id` = ?', current_team[:id])
+        row = db.query('SELECT SUM(`student`) = COUNT(*) AS `student` WHERE `team_id` = ?', current_team[:id])
         db.xquery('UPDATE `teams` SET `is_students` = ? WHERE `team_id` = ?', row[:student], current_team[:id])
       end
       encode_response_pb
