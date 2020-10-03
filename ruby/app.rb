@@ -245,7 +245,7 @@ module Xsuportal
 
       def leaderboard_pb(team_id:0)
         if team_id == 0
-          cache = db.query('SELECT `created_at` FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
+          cache = db.query('SELECT * FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
           if cache
             return Marshal.load(cache[:content])
           end
