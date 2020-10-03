@@ -22,7 +22,7 @@ Griffin::Server.configure do |c|
   ]
 
   # Number of processes
-  c.workers 2
+  c.workers 1
   # Min/Max number of threads per process to handle gRPC call (= maximum concurrent number of gRPC requests per process)
   c.pool_size 15,15
   # Min/Max number of threads per process to handle HTTP/2 connection (= maximum concurrent connection per process)
