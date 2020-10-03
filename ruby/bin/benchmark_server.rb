@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+require 'newrelic_rpm'
+require 'new_relic/agent/method_tracer'
+require 'new_relic/agent/tracer'
+
 $: << File.expand_path('../lib', __dir__)
 require 'etc'
 require 'logger'
