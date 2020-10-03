@@ -244,6 +244,13 @@ module Xsuportal
       end
 
       def leaderboard_pb(team_id:0)
+        if team_id == 0
+          cache = db.query('SELECT `created_at` FROM `cache` WHERE `created_at` >= NOW(6) AND `id` = 1').first
+          if cache
+            return Marshal.load(cache[:content])
+          end
+        end
+
         contest = current_contest_status[:contest]
         contest_finished = contest[:status] == :FINISHED
         contest_freezes_at = contest[:contest_freezes_at]
@@ -465,12 +472,15 @@ module Xsuportal
           teams << item
         end
 
-        Proto::Resources::Leaderboard.new(
+        res = Proto::Resources::Leaderboard.new(
           teams: teams,
           general_teams: general_teams,
           student_teams: student_teams,
           contest: contest_pb,
         )
+        content = Marshal.dump(res)
+        db.query("UPDATE `cache` SET `content` = x'#{content.hex}', created_at = '#{(Time.now + 0.5).strftime('%Y-%m-%d %H:%M:%S.%6N')}' WHERE `id` = 1")
+        res
       end
 
       def clarification_pb(clar, team)
@@ -547,6 +557,12 @@ module Xsuportal
       db.query('TRUNCATE `notifications`')
       db.query('TRUNCATE `push_subscriptions`')
       db.query('TRUNCATE `contest_config`')
+      db.query('DROP TABLE IF EXISTS `cache`')
+      db.query('CREATE TABLE `cache` (
+        `id` INT PRIMARY KEY,
+        `content` LONGBLOB,
+        `created_at` DATETIME(6) NOT NULL
+      )')
 
       db.xquery(
         'INSERT `contestants` (`id`, `password`, `staff`, `created_at`) VALUES (?, ?, TRUE, NOW(6))',
