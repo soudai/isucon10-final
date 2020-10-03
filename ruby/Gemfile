@@ -17,3 +17,5 @@ group :development do
   gem 'sinatra-contrib'
   gem 'grpc-tools'
 end
+
+gem 'newrelic_rpm', '6.11.0.365', require: false

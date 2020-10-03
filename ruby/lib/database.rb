@@ -6,7 +6,8 @@ module Xsuportal
     class << self
       def connection
         Thread.current[:db] ||= begin
-          conn = Mysql2::Client.new(
+          #conn = Mysql2::Client.new(
+          params = {
             host: ENV['MYSQL_HOSTNAME'] || '127.0.0.1',
             port: ENV['MYSQL_PORT'] || '3306',
             username: ENV['MYSQL_USER'] || 'isucon',
@@ -18,8 +19,10 @@ module Xsuportal
             symbolize_keys: true,
             reconnect: true,
             init_command: "SET time_zone='+00:00';",
-          )
-          conn
+          }
+          #)
+          ENV['NEW_RELIC_AGENT_ENABLED'] ? Mysql2ClientWithNewRelic.new(params) : Mysql2::Client.new(params)
+          #conn
         end
       end
 

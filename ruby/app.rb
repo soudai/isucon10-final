@@ -3,6 +3,27 @@ require 'google/protobuf'
 require 'digest/sha2'
 require 'securerandom'
 
+require 'newrelic_rpm'
+require 'new_relic/agent/method_tracer'
+require 'new_relic/agent/tracer'
+
+class Mysql2ClientWithNewRelic < Mysql2::Client
+  def initialize(*args)
+    super
+  end
+
+  def query(sql, *args)
+    callback = -> (result, metrics, elapsed) do
+      NewRelic::Agent::Datastores.notice_sql(sql, metrics, elapsed)
+    end
+    op = sql[/^(select|insert|update|delete|begin|commit|rollback)/i] || 'other'
+    table = sql[/\bbenchmark_jobs|clarifications|contest_config|contestants|notifications|push_subscriptions|teams\b/] || 'other'
+    NewRelic::Agent::Datastores.wrap('MySQL', op, table, callback) do
+      super
+    end
+  end
+end
+
 $LOAD_PATH << File.join(File.expand_path('../', __FILE__), 'lib')
 require 'routes'
 require 'database'
