@@ -7,6 +7,11 @@ require 'newrelic_rpm'
 require 'new_relic/agent/method_tracer'
 require 'new_relic/agent/tracer'
 
+$LOAD_PATH << File.join(File.expand_path('../', __FILE__), 'lib')
+require 'routes'
+require 'database'
+require 'notifier'
+
 class Mysql2ClientWithNewRelic < Mysql2::Client
   def initialize(*args)
     super
@@ -23,11 +28,6 @@ class Mysql2ClientWithNewRelic < Mysql2::Client
     end
   end
 end
-
-$LOAD_PATH << File.join(File.expand_path('../', __FILE__), 'lib')
-require 'routes'
-require 'database'
-require 'notifier'
 
 module Xsuportal
   class App < Sinatra::Base
