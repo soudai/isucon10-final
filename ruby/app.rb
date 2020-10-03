@@ -493,7 +493,7 @@ module Xsuportal
             general_teams: general_teams,
             student_teams: student_teams,
           }
-          #$cache = [Time.now, params]
+          $cache = [Time.now, params]
         end
 
         Proto::Resources::Leaderboard.new(
